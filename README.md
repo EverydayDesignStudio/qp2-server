@@ -1,1 +1,1 @@
-# qp2-server
+# queuePlayer
