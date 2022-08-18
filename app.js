@@ -34,8 +34,8 @@ const port = process.env.PORT || '5000';
 
 //Initialising the SpotifyAPI node package
 var spotifyApi = new SpotifyWebApi({
-    clientId: '8218419c96a644cba6f9f338b084cdfd',
-    clientSecret: '4badd7bf16d94840ac5e96ce50206f5c',
+    clientId: 'd39a184805e14fdeba7d8a784ab2fe4d',
+    clientSecret: '15fe109e966b412b88d6bed274650d85',
     redirectUri: 'https://qpt-server.herokuapp.com/callback'
 });
 
