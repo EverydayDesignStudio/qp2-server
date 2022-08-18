@@ -99,6 +99,7 @@ spotifyApi
  app.get('/getAvailable', async (req, res) => {
    const ava=await spotifyApi.getMyDevices()
    .then(function (data){
+     console.log(data,body.devices);
      res.send(data.body.devices);
    })
  })
