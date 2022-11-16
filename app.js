@@ -34,13 +34,18 @@ const port = process.env.PORT || '5000';
 
 //Initialising the SpotifyAPI node package
 var spotifyApi = new SpotifyWebApi({
-    clientId: 'd39a184805e14fdeba7d8a784ab2fe4d',
-    clientSecret: '15fe109e966b412b88d6bed274650d85',
-    redirectUri: 'https://qpt-server.herokuapp.com/callback'
+    clientId: '765cacd3b58f4f81a5a7b4efa4db02d2',
+    clientSecret: 'cb0ddbd96ee64caaa3d0bf59777f6871',
+    redirectUri: 'https://qpo-server.herokuapp.com/callback'
 });
 
 var access_token;
 var wot=0;
+var ended=false;
+var seekNo=0;
+var endID="";
+var isAuthenticated=false;
+
 //Initialising the express server
 const app = express();
 app.use(bodyParser.json());
@@ -99,7 +104,6 @@ spotifyApi
  app.get('/getAvailable', async (req, res) => {
    const ava=await spotifyApi.getMyDevices()
    .then(function (data){
-     console.log(data.body.devices);
      res.send(data.body.devices);
    })
  })
@@ -128,31 +132,71 @@ app.post('/seek',async (req, res) => {
    res.send();
  });
 });
+
 // Gets the state of the active player to check if song has ended or playing
-app.get('/getState', async (req, res)=> {
-    const state=await spotifyApi.getMyCurrentPlaybackState()
-    .then(function(data) {
-      if(data.body.is_playing && data.body.item!=null)
-      {
-        if(wot==0 && data.body.progress_ms+1000>data.body.item.duration_ms)
-        {
-          wot=1;
-          console.log('Finished Playing: ' + data.body.item.name);
-          res.send({song:data.body.item.id,state:"ended", seek:data.body.progress_ms}); 
-        }
-        else
-        {
-          res.send({song:data.body.item.id,state:"playing", seek:data.body.progress_ms});
-        } 
-      }
-      else
-      {
-        res.send({song:null,state:"unknown", seek:0})
-      }
-    }, function(err) {
-      console.log('Something went wrong!', err);
-    });
+// app.get('/getState', async (req, res)=> {
+//     const state=await spotifyApi.getMyCurrentPlaybackState()
+//     .then(function(data) {
+//       if(data.body.is_playing && data.body.item!=null)
+//       {
+//         if(wot==0 && data.body.progress_ms+2000>data.body.item.duration_ms)
+//         // if(wot==0 && data.body.progress_ms+1000>data.body.item.duration_ms)
+//         {
+//           wot=1;
+//           console.log('Finished Playing: ' + data.body.item.name);
+//           res.send({song:data.body.item.id,state:"ended", seek:data.body.progress_ms}); 
+//         }
+//         else
+//         {
+//           res.send({song:data.body.item.id,state:"playing", seek:data.body.progress_ms});
+//         } 
+//       }
+//       else
+//       {
+//         res.send({song:null,state:"unknown", seek:0})
+//       }
+//     }, function(err) {
+//       console.log('Something went wrong!', err);
+//     });
+// })
+
+app.get('/getState', (req, res)=> {
+  isAuthenticated=true;
+  if(ended==true) {
+    console.log("Song has ended: ", endID);
+    res.send({song:endID,state:"ended",seek:seekNo})
+    ended=false;
+  }
+  else
+  {
+    res.send({song:endID,state:"unknown", seek:seekNo})
+  }
 })
+ 
+
+
+const stateCheck=setInterval(async () => {
+    if(isAuthenticated)
+    {
+      const state=await spotifyApi.getMyCurrentPlaybackState()
+      .then(function(data) {
+        if(data.body.is_playing && data.body.item!=null)
+        {
+          endID=data.body.item.id;
+          seekNo=data.body.progress_ms
+          console.log(data.body.progress_ms);
+          console.log(data.body.item.duration_ms);
+          if(wot==0 && data.body.progress_ms+1000>data.body.item.duration_ms)
+          {
+            wot=1;
+            console.log('Finished Playing: ' + data.body.item.name);
+            ended=true;
+          }
+        }
+      });
+    }
+},1000)
+
 
 //Gets the name of the song playing, just for the website
 // app.post('/getTrack', (req, res) => {
